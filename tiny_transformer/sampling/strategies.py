@@ -148,11 +148,11 @@ def top_p_sample(
     # Compute cumulative probabilities
     cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
 
-    # Find cutoff: first position where cumsum exceeds p
-    # Shift right by 1 to keep at least one token
+    # Find cutoff: remove tokens where cumsum exceeds p
+    # Keep tokens where cumsum <= p (nucleus sampling)
+    # Always keep at least the top token (index 0)
     sorted_indices_to_remove = cumulative_probs > p
-    sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
-    sorted_indices_to_remove[..., 0] = False
+    sorted_indices_to_remove[..., 0] = False  # Always keep the most likely token
 
     # Create mask in original order
     indices_to_remove = sorted_indices_to_remove.scatter(
@@ -220,9 +220,10 @@ def combined_sample(
         sorted_probs, sorted_indices = torch.sort(probs, descending=True, dim=-1)
         cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
 
+        # Remove tokens where cumsum exceeds p (nucleus sampling)
+        # Always keep at least the top token
         sorted_indices_to_remove = cumulative_probs > top_p
-        sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
-        sorted_indices_to_remove[..., 0] = False
+        sorted_indices_to_remove[..., 0] = False  # Always keep the most likely token
 
         indices_to_remove = sorted_indices_to_remove.scatter(
             dim=-1,

@@ -50,8 +50,36 @@ def scaled_dot_product_attention(
     # query: (B, T, d_k)
     # key: (B, T, d_k)
     # value: (B, T, d_v)
-    
-    d_k = query.size(-1)  # Key dimension for scaling
+
+    # Input validation
+    if query.dim() < 3 or key.dim() < 3 or value.dim() < 3:
+        raise ValueError(
+            f"Expected 3D tensors (batch, seq_len, dim), got shapes: "
+            f"query={query.shape}, key={key.shape}, value={value.shape}"
+        )
+
+    batch_size, seq_len, d_k = query.shape
+
+    # Validate non-empty sequences
+    if seq_len == 0:
+        raise ValueError(f"Cannot compute attention on empty sequence (seq_len=0)")
+
+    # Validate key dimension is positive
+    if d_k == 0:
+        raise ValueError(f"Key dimension d_k must be positive, got d_k={d_k}")
+
+    # Validate key and value have matching sequence length
+    if key.size(1) != seq_len:
+        raise ValueError(
+            f"Query and key must have same sequence length, "
+            f"got query.shape[1]={seq_len}, key.shape[1]={key.size(1)}"
+        )
+
+    if value.size(1) != seq_len:
+        raise ValueError(
+            f"Query and value must have same sequence length, "
+            f"got query.shape[1]={seq_len}, value.shape[1]={value.size(1)}"
+        )
     
     # Step 1: Compute attention scores
     # (B, T, d_k) @ (B, d_k, T) -> (B, T, T)
@@ -64,6 +92,27 @@ def scaled_dot_product_attention(
     
     # Step 3: Apply mask if provided (for causal attention)
     if mask is not None:
+        # Validate mask shape
+        if mask.dim() == 2:
+            # Mask is (seq_len, seq_len) - will be broadcast
+            if mask.shape != (seq_len, seq_len):
+                raise ValueError(
+                    f"2D mask must have shape ({seq_len}, {seq_len}), "
+                    f"got {mask.shape}"
+                )
+        elif mask.dim() == 3:
+            # Mask is (batch_size, seq_len, seq_len)
+            if mask.shape != (batch_size, seq_len, seq_len):
+                raise ValueError(
+                    f"3D mask must have shape ({batch_size}, {seq_len}, {seq_len}), "
+                    f"got {mask.shape}"
+                )
+        else:
+            raise ValueError(
+                f"Mask must be 2D (seq_len, seq_len) or 3D (batch, seq_len, seq_len), "
+                f"got {mask.dim()}D with shape {mask.shape}"
+            )
+
         # Add mask (which contains -inf for positions to mask out)
         # After softmax, these will become 0
         scores = scores + mask  # Broadcasting: mask can be (T, T) or (B, T, T)
@@ -87,16 +136,16 @@ def scaled_dot_product_attention(
 def create_causal_mask(seq_len: int, device: Optional[torch.device] = None) -> torch.Tensor:
     """
     Create a causal (lower-triangular) mask for autoregressive generation.
-    
+
     This ensures that position i can only attend to positions <= i.
-    
+
     Args:
         seq_len: Sequence length
         device: Device to create mask on
-        
+
     Returns:
         mask: Causal mask of shape (seq_len, seq_len) with 0s and -inf
-        
+
     Example:
         >>> mask = create_causal_mask(4)
         >>> print(mask)
@@ -105,6 +154,10 @@ def create_causal_mask(seq_len: int, device: Optional[torch.device] = None) -> t
                 [ 0.,  0.,  0., -inf],
                 [ 0.,  0.,  0.,  0.]])
     """
+    # Input validation
+    if seq_len <= 0:
+        raise ValueError(f"Sequence length must be positive, got seq_len={seq_len}")
+
     # Create lower triangular matrix of ones
     # tril creates: [[1, 0, 0],
     #                [1, 1, 0],

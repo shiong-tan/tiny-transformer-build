@@ -12,6 +12,7 @@ Example:
 
 import os
 import subprocess
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Union
@@ -95,9 +96,36 @@ def save_checkpoint(
     # Add any extra data
     checkpoint.update(extra_data)
 
-    # Save
-    Path(path).parent.mkdir(parents=True, exist_ok=True)
-    torch.save(checkpoint, path)
+    # Atomic save: write to temp file, then rename
+    # This prevents corruption if save is interrupted
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Create temp file in same directory as target (ensures same filesystem)
+    temp_fd, temp_path = tempfile.mkstemp(
+        dir=path.parent,
+        prefix=f".{path.stem}_",
+        suffix=".pt.tmp"
+    )
+
+    try:
+        # Close file descriptor (torch.save will open it)
+        os.close(temp_fd)
+
+        # Write checkpoint to temp file
+        torch.save(checkpoint, temp_path)
+
+        # Atomic rename: overwrites target if it exists
+        # On POSIX systems, this is atomic
+        os.replace(temp_path, path)
+
+    except Exception as e:
+        # Clean up temp file on failure
+        try:
+            os.remove(temp_path)
+        except FileNotFoundError:
+            pass
+        raise RuntimeError(f"Failed to save checkpoint to {path}: {e}") from e
 
 
 def load_checkpoint(

@@ -50,6 +50,7 @@ class TrainerConfig:
         warmup_steps: Number of warmup steps for LR schedule
         device: Training device (cuda/mps/cpu)
         checkpoint_dir: Directory to save checkpoints
+        pad_token_id: Token ID for padding (for loss computation with ignore_index)
 
     Example:
         >>> config = TrainerConfig(
@@ -70,6 +71,7 @@ class TrainerConfig:
     warmup_steps: int = 100
     device: str = 'cpu'
     checkpoint_dir: str = 'checkpoints'
+    pad_token_id: Optional[int] = None
 
 
 class Trainer:
@@ -230,10 +232,11 @@ class Trainer:
             # Forward pass
             logits, _ = self.model(input_ids)
 
-            # Compute loss
+            # Compute loss (ignore padding tokens if specified)
             loss = nn.functional.cross_entropy(
                 logits.view(-1, logits.size(-1)),
-                target_ids.view(-1)
+                target_ids.view(-1),
+                ignore_index=self.config.pad_token_id if self.config.pad_token_id is not None else -100
             )
 
             # Backward pass
