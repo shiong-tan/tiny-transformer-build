@@ -1,0 +1,66 @@
+# Base Configuration for Tiny Transformer
+# This is a balanced configuration suitable for most tasks
+
+# Model Architecture
+model:
+  d_model: 512          # Model dimension
+  n_heads: 8            # Number of attention heads
+  n_layers: 6           # Number of transformer blocks
+  d_ff: 2048            # Feed-forward dimension (typically 4 * d_model)
+  max_seq_len: 512      # Maximum sequence length
+  dropout: 0.1          # Dropout probability
+  tie_weights: true     # Tie input/output embeddings
+  pos_encoding: "sinusoidal"  # "sinusoidal" or "learned"
+
+# Training Configuration
+training:
+  # Optimization
+  learning_rate: 3.0e-4
+  weight_decay: 0.01
+  grad_clip: 1.0
+
+  # Schedule
+  batch_size: 32
+  max_steps: 10000
+  warmup_steps: 1000
+  scheduler: "cosine"  # "cosine" or "linear"
+  min_lr: 1.0e-5
+
+  # Evaluation
+  eval_interval: 500
+  eval_steps: 100
+
+  # Checkpointing
+  checkpoint_interval: 1000
+  keep_best_n: 3
+
+  # Logging
+  log_interval: 100
+
+  # Device
+  device: "auto"  # "auto", "cuda", "mps", or "cpu"
+  seed: 42
+
+# Data Configuration
+data:
+  train_file: null      # Path to training data (required)
+  val_file: null        # Path to validation data (optional)
+  seq_len: 256          # Sequence length for training
+  stride: null          # Stride for sliding window (null = seq_len)
+  tokenizer: "char"     # "char" or custom tokenizer
+  vocab_size: null      # Auto-detected from data
+
+# Experiment Tracking
+experiment:
+  project: "tiny-transformer"
+  experiment_name: null  # Auto-generated if not provided
+  backend: "auto"        # "auto", "wandb", "tensorboard", or "console"
+  log_dir: "logs"
+  tags: []
+  notes: ""
+
+# Paths
+paths:
+  checkpoint_dir: "checkpoints"
+  output_dir: "outputs"
+  data_dir: "data"

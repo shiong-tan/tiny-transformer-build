@@ -1,0 +1,74 @@
+# Shakespeare Configuration
+# Optimized for training on Shakespeare dataset (character-level)
+
+# Model Architecture (Medium-sized for Shakespeare)
+model:
+  d_model: 384          # Medium model dimension
+  n_heads: 6            # 6 attention heads
+  n_layers: 6           # 6 transformer blocks
+  d_ff: 1536            # 4 * d_model
+  max_seq_len: 256      # Sufficient for Shakespeare
+  dropout: 0.1
+  tie_weights: true
+  pos_encoding: "sinusoidal"
+
+# Training Configuration (Shakespeare-optimized)
+training:
+  # Optimization
+  learning_rate: 5.0e-4  # Slightly higher for character-level
+  weight_decay: 0.01
+  grad_clip: 1.0
+
+  # Schedule
+  batch_size: 64         # Larger batches for character-level
+  max_steps: 20000       # Enough for ~20 epochs on Shakespeare
+  warmup_steps: 2000     # 10% warmup
+  scheduler: "cosine"
+  min_lr: 5.0e-6
+
+  # Evaluation
+  eval_interval: 500
+  eval_steps: 100
+
+  # Checkpointing
+  checkpoint_interval: 1000
+  keep_best_n: 5        # Keep more checkpoints
+
+  # Logging
+  log_interval: 100
+
+  # Device
+  device: "auto"
+  seed: 42
+
+# Data Configuration (Shakespeare)
+data:
+  train_file: "data/tiny_shakespeare.txt"
+  val_file: null        # Will split from train_file
+  seq_len: 256          # Good for Shakespeare
+  stride: 128           # 50% overlap for more training data
+  tokenizer: "char"     # Character-level tokenizer
+  vocab_size: null      # Auto-detected (~65 chars for Shakespeare)
+
+# Experiment Tracking
+experiment:
+  project: "tiny-transformer"
+  experiment_name: "shakespeare"
+  backend: "auto"       # Use wandb if available
+  log_dir: "logs"
+  tags: ["shakespeare", "character-level"]
+  notes: "Training on Shakespeare dataset with character-level tokenization"
+
+# Paths
+paths:
+  checkpoint_dir: "checkpoints/shakespeare"
+  output_dir: "outputs/shakespeare"
+  data_dir: "data"
+
+# Generation Settings (for inference)
+generation:
+  max_new_tokens: 500
+  temperature: 0.8
+  top_k: 50
+  top_p: 0.95
+  do_sample: true

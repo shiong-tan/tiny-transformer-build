@@ -1,0 +1,66 @@
+# Tiny Configuration for Testing
+# Fast training with a small model for debugging and quick iterations
+
+# Model Architecture (Tiny)
+model:
+  d_model: 128          # Small model dimension
+  n_heads: 4            # Fewer attention heads
+  n_layers: 2           # Fewer layers
+  d_ff: 512             # Smaller feed-forward
+  max_seq_len: 128      # Shorter sequences
+  dropout: 0.1
+  tie_weights: true
+  pos_encoding: "sinusoidal"
+
+# Training Configuration (Fast)
+training:
+  # Optimization
+  learning_rate: 1.0e-3  # Higher LR for faster convergence
+  weight_decay: 0.01
+  grad_clip: 1.0
+
+  # Schedule
+  batch_size: 8          # Smaller batches
+  max_steps: 1000        # Fewer steps
+  warmup_steps: 100      # Quick warmup
+  scheduler: "cosine"
+  min_lr: 1.0e-5
+
+  # Evaluation
+  eval_interval: 100     # More frequent eval
+  eval_steps: 20
+
+  # Checkpointing
+  checkpoint_interval: 200
+  keep_best_n: 2
+
+  # Logging
+  log_interval: 20
+
+  # Device
+  device: "auto"
+  seed: 42
+
+# Data Configuration
+data:
+  train_file: null
+  val_file: null
+  seq_len: 64           # Shorter sequences
+  stride: null
+  tokenizer: "char"
+  vocab_size: null
+
+# Experiment Tracking
+experiment:
+  project: "tiny-transformer"
+  experiment_name: "tiny_test"
+  backend: "console"    # Console only for testing
+  log_dir: "logs"
+  tags: ["tiny", "test"]
+  notes: "Small model for quick testing"
+
+# Paths
+paths:
+  checkpoint_dir: "checkpoints/tiny"
+  output_dir: "outputs/tiny"
+  data_dir: "data"
