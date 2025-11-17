@@ -299,13 +299,16 @@ def create_data_loaders(
     train_dataset = TextDataset(train_tokens, seq_len, stride)
     val_dataset = TextDataset(val_tokens, seq_len, seq_len) if val_tokens else None
 
+    # Only use pin_memory on CUDA devices (not supported on MPS)
+    use_pin_memory = torch.cuda.is_available()
+
     # Create data loaders
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
-        pin_memory=True
+        pin_memory=use_pin_memory
     )
 
     val_loader = DataLoader(
@@ -313,7 +316,7 @@ def create_data_loaders(
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
-        pin_memory=True
+        pin_memory=use_pin_memory
     ) if val_dataset else None
 
     return train_loader, val_loader
