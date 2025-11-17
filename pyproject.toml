@@ -60,10 +60,10 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/tiny-transformer-build"
-Documentation = "https://github.com/yourusername/tiny-transformer-build#readme"
-Repository = "https://github.com/yourusername/tiny-transformer-build"
-Issues = "https://github.com/yourusername/tiny-transformer-build/issues"
+Homepage = "https://github.com/shiong-tan/tiny-transformer-build"
+Documentation = "https://github.com/shiong-tan/tiny-transformer-build#readme"
+Repository = "https://github.com/shiong-tan/tiny-transformer-build"
+Issues = "https://github.com/shiong-tan/tiny-transformer-build/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
