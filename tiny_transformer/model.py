@@ -182,7 +182,11 @@ class TinyTransformerLM(nn.Module):
         # Create default causal mask if not provided
         if mask is None:
             # Lower triangular matrix: position i can attend to positions ≤ i
+            # Create mask with 1s (allowed) and 0s (masked)
             mask = torch.tril(torch.ones(seq_len, seq_len, device=tokens.device))
+            # Convert to attention mask format: 0 (keep) and -inf (mask out)
+            mask = mask.masked_fill(mask == 0, float('-inf'))
+            mask = mask.masked_fill(mask == 1, 0.0)
 
         # Step 1: Embed tokens (includes positional encoding and dropout)
         # (B, T) → (B, T, d_model)
